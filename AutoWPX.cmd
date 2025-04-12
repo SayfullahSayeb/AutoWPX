@@ -10,7 +10,7 @@ echo " / ___ \ |_| | || (_) \ V  V / |  __//  \               "
 echo "/_/   \_\__,_|\__\___/ \_/\_/  |_|  /_/\_\              "
 echo.                                                         "
 echo   Author    : Sayfullah Sayeb                            "
-echo   Version   : 1.0                                        "
+echo   Version   : 1.0.1                                      "
 echo   Source    : https://github.com/SayfullahSayeb/AutoWPX  "
 echo   Details   : WordPress Auto Setup Script for XAMPP      "
 echo ========================================================="
@@ -101,20 +101,26 @@ findstr /C:"Include conf/extra/httpd-vhosts.conf" "%XAMPP%\apache\conf\httpd.con
     echo Include conf/extra/httpd-vhosts.conf >> "%XAMPP%\apache\conf\httpd.conf"
 )
 
+:: === Restart Apache and MySQL to apply vhost changes ===
+"%XAMPP%\xampp_stop.exe" >nul 2>&1
+timeout /t 2 >nul
+"%XAMPP%\xampp_start.exe" >nul 2>&1
+
+:: === Open site in browser ===
+start http://%DOMAIN%
+
+
 :: === Final Menu ===
 :MENU
 echo.
 echo ===============================
-echo 1 - Restart XAMPP and open site in browser
+echo 1 - Open site in browser
 echo 2 - Main menu 
 echo 0 - Exit
 echo ===============================
 set /p ACTION=Choose an option: 
 
 if "%ACTION%"=="1" (
-    taskkill /F /IM xampp-control.exe >nul 2>&1
-    timeout /t 2 >nul
-    start "" "%XAMPP%\xampp-control.exe"
     start http://%DOMAIN%
     goto MENU
 ) else if "%ACTION%"=="2" (

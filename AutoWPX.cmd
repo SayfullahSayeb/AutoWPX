@@ -11,11 +11,12 @@ echo " / ___ \ |_| | || (_) \ V  V / |  __//  \               "
 echo "/_/   \_\__,_|\__\___/ \_/\_/  |_|  /_/\_\              "
 echo.                                                         "
 echo   Author    : Sayfullah Sayeb                            "
-echo   Version   : 1.0.3                                      "
+echo   Version   : 1.0.4                                      "
 echo   Source    : https://github.com/SayfullahSayeb/AutoWPX  "
 echo   Details   : WordPress Auto Setup Script for XAMPP      "
 echo ========================================================="
 echo.
+
 
 :: === XAMPP paths ===
 set "XAMPP=C:\xampp"
@@ -76,6 +77,12 @@ findstr /C:"ServerName %DOMAIN%" "%VHOST_CONF%" >nul || (
 findstr /C:"Include conf/extra/httpd-vhosts.conf" "%XAMPP%\apache\conf\httpd.conf" >nul || (
     echo Include conf/extra/httpd-vhosts.conf >> "%XAMPP%\apache\conf\httpd.conf"
 )
+
+:: === Restart XAMPP (Apache & MySQL) ===
+echo Restarting XAMPP services...
+"%XAMPP%\xampp_stop.exe" >nul 2>&1
+timeout /t 2 >nul
+"%XAMPP%\xampp_start.exe" >nul 2>&1
 
 :: === Launch site install page ===
 echo Done! Opening site...

@@ -11,19 +11,26 @@ echo " / ___ \ |_| | || (_) \ V  V / |  __//  \               "
 echo "/_/   \_\__,_|\__\___/ \_/\_/  |_|  /_/\_\              "
 echo.                                                         "
 echo   Author    : Sayfullah Sayeb                            "
-echo   Version   : 1.0.4                                      "
+echo   Version   : 1.0.5                                      "
 echo   Source    : https://github.com/SayfullahSayeb/AutoWPX  "
 echo   Details   : WordPress Auto Setup Script for XAMPP      "
 echo ========================================================="
 echo.
 
-
 :: === XAMPP paths ===
 set "XAMPP=C:\xampp"
 set "MYSQL_EXE=%XAMPP%\mysql\bin\mysql.exe"
 
-:: === Ask for domain ===
+:: === Ask for type of site ===
 echo ===============================
+echo   AutoWPX - XAMPP Site Setup
+echo ===============================
+echo 1 - Create WordPress Site
+echo 2 - Create Static HTML Site
+echo ===============================
+set /p SITE_TYPE=Choose [1/2]: 
+
+:: === Ask for domain ===
 set /p DOMAIN=Enter your domain (e.g., mysite.local): 
 set "SITE_DIR=%XAMPP%\htdocs\%DOMAIN%"
 set "DB_NAME=%DOMAIN%"
@@ -31,24 +38,42 @@ set "DB_NAME=%DOMAIN%"
 :: === Create site directory ===
 if not exist "%SITE_DIR%" mkdir "%SITE_DIR%"
 
-:: === Download and extract WordPress ===
-echo Downloading WordPress...
-cd /d "%SITE_DIR%"
-powershell -Command "Invoke-WebRequest -Uri https://wordpress.org/latest.zip -OutFile 'latest.zip'"
+if "%SITE_TYPE%"=="1" (
 
-echo Extracting WordPress into site folder...
-powershell -Command "Expand-Archive -Path 'latest.zip' -DestinationPath '.' -Force"
-xcopy /E /I /Y ".\wordpress\*" "." >nul
-rmdir /S /Q ".\wordpress"
-del latest.zip
+    :: === Download and extract WordPress ===
+    echo Downloading WordPress...
+    cd /d "%SITE_DIR%"
+    powershell -Command "Invoke-WebRequest -Uri https://wordpress.org/latest.zip -OutFile 'latest.zip'"
 
-:: === Create MySQL database ===
-echo Creating database...
-"%MYSQL_EXE%" -u root -e "CREATE DATABASE IF NOT EXISTS `%DB_NAME%`;"
+    echo Extracting WordPress...
+    powershell -Command "Expand-Archive -Path 'latest.zip' -DestinationPath '.' -Force"
+    xcopy /E /I /Y ".\wordpress\*" "." >nul
+    rmdir /S /Q ".\wordpress"
+    del latest.zip
 
-:: === Setup wp-config.php ===
-copy "wp-config-sample.php" "wp-config.php" >nul
-powershell -Command "(Get-Content 'wp-config.php') -replace 'database_name_here', '%DB_NAME%' -replace 'username_here', 'root' -replace 'password_here', '' | Set-Content 'wp-config.php'"
+    :: === Create MySQL database ===
+    echo Creating database...
+    "%MYSQL_EXE%" -u root -e "CREATE DATABASE IF NOT EXISTS `%DB_NAME%`;"
+
+    :: === Setup wp-config.php ===
+    copy "wp-config-sample.php" "wp-config.php" >nul
+    powershell -Command "(Get-Content 'wp-config.php') -replace 'database_name_here', '%DB_NAME%' -replace 'username_here', 'root' -replace 'password_here', '' | Set-Content 'wp-config.php'"
+
+) else if "%SITE_TYPE%"=="2" (
+
+    :: === Create basic index.html for static site ===
+    echo Creating static site files...
+    (
+        echo ^<html^>
+        echo ^<head^>^<title^>%DOMAIN%^</title^>^</head^>
+        echo ^<body^>
+        echo ^<h1^>Welcome to %DOMAIN%^</h1^>
+        echo ^<p^>This is a static HTML site.^</p^>
+        echo ^</body^>
+        echo ^</html^>
+    ) > "%SITE_DIR%\index.html"
+
+)
 
 :: === Add to hosts file ===
 findstr /C:"%DOMAIN%" C:\Windows\System32\drivers\etc\hosts >nul || (
@@ -84,7 +109,11 @@ echo Restarting XAMPP services...
 timeout /t 2 >nul
 "%XAMPP%\xampp_start.exe" >nul 2>&1
 
-:: === Launch site install page ===
+:: === Launch site ===
 echo Done! Opening site...
-start http://%DOMAIN%/wp-admin/install.php
+if "%SITE_TYPE%"=="1" (
+    start http://%DOMAIN%/wp-admin/install.php
+) else (
+    start http://%DOMAIN%/
+)
 pause
